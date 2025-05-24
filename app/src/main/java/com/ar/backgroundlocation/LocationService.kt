@@ -1,4 +1,4 @@
-package com.ar.backgroundlocation
+package com.ar.backgroundlocation // Reemplaza con tu paquete
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -10,12 +10,10 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import kotlinx.coroutines.flow.MutableStateFlow // Nuevo import
+import kotlinx.coroutines.flow.asStateFlow     // Nuevo import
 
 
-/**
- * @Author: Abdul Rehman
- * @Date: 06/05/2024.
- */
 class LocationService : Service(), LocationUpdatesCallBack {
     private val TAG = LocationService::class.java.simpleName
 
@@ -23,8 +21,20 @@ class LocationService : Service(), LocationUpdatesCallBack {
     private var notification: NotificationCompat.Builder? = null
     private var notificationManager: NotificationManager? = null
 
+    // --- NUEVO: StateFlow para emitir la ubicación ---
+    companion object {
+        private val _locationStateFlow = MutableStateFlow<Location?>(null)
+        val locationStateFlow = _locationStateFlow.asStateFlow() // Exponer como StateFlow inmutable
+
+        // Mantener las constantes de acción
+        const val ACTION_SERVICE_START = "ACTION_START" // Ya lo tenías
+        const val ACTION_SERVICE_STOP = "ACTION_STOP"   // Ya lo tenías
+    }
+    // --- FIN DE LO NUEVO ---
+
     override fun onCreate() {
         super.onCreate()
+        _locationStateFlow.value = null // Reiniciar al crear el servicio
         gpsLocationClient = GPSLocationClient()
         gpsLocationClient.setLocationUpdatesCallBack(this)
     }
@@ -41,51 +51,69 @@ class LocationService : Service(), LocationUpdatesCallBack {
         return null
     }
 
-    companion object {
-        const val ACTION_SERVICE_START = "ACTION_START"
-        const val ACTION_SERVICE_STOP = "ACTION_STOP"
-    }
-
-
     private fun startService() {
         gpsLocationClient.getLocationUpdates(applicationContext)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 "location",
-                "Location",
-                NotificationManager.IMPORTANCE_DEFAULT
+                "Location Updates", // Nombre del canal más descriptivo
+                NotificationManager.IMPORTANCE_LOW // Bajar importancia para que no sea tan intrusivo
             )
-            val notificationManager =
+            val localNotificationManager =
                 getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
+            localNotificationManager.createNotificationChannel(channel)
+            notificationManager = localNotificationManager // Asignar a la variable de clase
         }
         notification = NotificationCompat.Builder(this, "location")
-            .setContentTitle("Tracking location...")
-            .setContentText("Searching...")
-            .setSmallIcon(R.drawable.ic_launcher_background)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setOngoing(true)
+            .setContentTitle("Servicio de Ubicación Activo") // Título más claro
+            .setContentText("Obteniendo ubicación...")
+            .setSmallIcon(R.drawable.ic_launcher_foreground) // Usa tu icono de app
+            .setPriority(NotificationCompat.PRIORITY_LOW) // Bajar prioridad
+            .setOngoing(true) // Para servicio en primer plano
 
-        notificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        // Asignar notificationManager si no se hizo en el bloque OREO
+        if (notificationManager == null && Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        }
 
         startForeground(1, notification?.build())
+        Log.d(TAG, "Servicio de ubicación iniciado.")
     }
 
     private fun stopService() {
-        gpsLocationClient.setLocationUpdatesCallBack(null)
+        Log.d(TAG, "Intentando detener el servicio de ubicación.")
+        gpsLocationClient.setLocationUpdatesCallBack(null) // Detener actualizaciones del GPSLocationClient
+        _locationStateFlow.value = null // Limpiar la última ubicación conocida
         stopForeground(STOP_FOREGROUND_REMOVE)
-        stopSelf()
+        stopSelf() // Detener el servicio
+        Log.d(TAG, "Servicio de ubicación detenido.")
     }
 
     override fun locationException(message: String) {
-        Log.d(TAG, message)
+        Log.d(TAG, "LocationException: $message")
+        // Podrías emitir un estado de error aquí también si quieres mostrarlo en la UI
     }
 
     override fun onLocationUpdate(location: Location) {
+        Log.d(TAG, "Nueva ubicación: (${location.latitude}, ${location.longitude})")
+        // Actualizar el StateFlow para la UI
+        _locationStateFlow.value = location
+
+        // Actualizar la notificación (como ya lo hacías)
         val updatedNotification = notification?.setContentText(
-            "Location: (${location.latitude}, ${location.longitude})"
+            "Lat: ${location.latitude.format(6)}, Lon: ${location.longitude.format(6)}"
         )
         notificationManager?.notify(1, updatedNotification?.build())
+    }
+
+    // Función de utilidad para formatear decimales (puedes moverla a otro lado)
+    private fun Double.format(digits: Int): String = "%.${digits}f".format(this)
+
+    override fun onDestroy() {
+        // Asegurarse de limpiar recursos si el servicio es destruido inesperadamente
+        gpsLocationClient.setLocationUpdatesCallBack(null)
+        _locationStateFlow.value = null
+        super.onDestroy()
+        Log.d(TAG, "LocationService onDestroy")
     }
 }
