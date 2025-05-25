@@ -1,188 +1,274 @@
-package com.ar.backgroundlocation // Reemplaza con tu paquete
+package com.ar.backgroundlocation
 
-import android.content.Context // Necesario para el Toast y el Intent de servicio
+import android.content.Context
 import android.content.Intent
-import android.location.Location // Para el tipo de currentLocation
-import android.net.Uri
+import android.location.Location
 import android.widget.Toast
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+// import androidx.compose.ui.draw.clip // No es necesario si quitamos .clip()
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview // Si quieres mantener el Preview
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.net.URLEncoder // Para la URL de WhatsApp
+import java.net.URLEncoder
 
-// Función de extensión para formatear Double (si no la tienes global)
 fun Double.format(digits: Int): String = "%.${digits}f".format(this)
 
+object AppScreenColors {
+    val ScreenBackground = Color(0xFFF0F7FA)
+    val CardBackground = Color.White
+    val PrimaryAction = Color(0xFF00A0B0)
+    val PrimaryActionText = Color.White
+    val SecondaryActionOutline = Color(0xFF00A0B0)
+    val SecondaryActionText = Color(0xFF007C89)
 
-@OptIn(ExperimentalMaterial3Api::class) // Para OutlinedTextField y otros componentes M3
+    val TitleText = Color(0xFF003D44)
+    val PrimaryText = Color(0xFF264653)
+    val SecondaryText = Color(0xFF58737F)
+    val HintText = Color(0xFF8AA3AF)
+
+    val IconPrimaryTint = Color(0xFF007C89)
+    val IconPersonPlaceholder = Color(0xFFAFBCC3)
+
+    val TextFieldBorder = Color(0xFFCED9E0)
+    val TextFieldFocusedBorder = PrimaryAction
+    val TextFieldCursor = PrimaryAction
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun App(currentLocation: Location?) { // Recibe la ubicación actual
+fun App(currentLocation: Location?) {
     val context = LocalContext.current
-    // Estados para los nuevos campos de texto
     var phoneNumber by remember { mutableStateOf("+507") }
     var customMessage by remember { mutableStateOf("") }
-    // Estado para saber si el servicio está corriendo (puedes mejorarlo observando un estado real del servicio)
-    var isServiceRunningActually by remember { mutableStateOf(false) } // Estimación inicial
+    var isServiceRunningUiState by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(AppScreenColors.ScreenBackground)
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // --- Sección "Push Notification Service" y Lat/Lon ---
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 4.dp)
-        ) {
-            Icon(
-                painter = painterResource(id = android.R.drawable.ic_menu_send), // Icono placeholder
-                contentDescription = "Service Status Icon",
-                modifier = Modifier.size(20.dp) // Un poco más pequeño
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Push Notification Service", style = MaterialTheme.typography.labelLarge)
-            Spacer(Modifier.weight(1f)) // Empuja Lat/Lon a la derecha
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    "Lat: ${currentLocation?.latitude?.format(6) ?: "---"}",
-                    style = MaterialTheme.typography.bodySmall
-                )
-                Text(
-                    "Lon: ${currentLocation?.longitude?.format(6) ?: "---"}",
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-        }
-
-        // --- Botones para iniciar/detener servicio (como los tenías) ---
-        // Puedes decidir si quieres mantenerlos visibles o controlar el servicio de otra forma
-        Row(
+        Card(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+            colors = CardDefaults.cardColors(containerColor = AppScreenColors.CardBackground),
+            shape = RoundedCornerShape(12.dp)
         ) {
-            Button(onClick = {
-                Toast.makeText(context, "Iniciando servicio...", Toast.LENGTH_SHORT).show()
-                Intent(context, LocationService::class.java).apply {
-                    action = LocationService.ACTION_SERVICE_START
-                    context.startService(this)
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.LocationOn,
+                        contentDescription = "Ícono Servicio GPS",
+                        tint = AppScreenColors.IconPrimaryTint,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "Servicio de Localización GPS",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Medium,
+                        color = AppScreenColors.PrimaryText
+                    )
                 }
-                isServiceRunningActually = true // Actualiza estado local
-            }) {
-                Text(text = "Iniciar GPS")
-            }
-            Button(onClick = {
-                Toast.makeText(context, "Deteniendo servicio...", Toast.LENGTH_SHORT).show()
-                Intent(context, LocationService::class.java).apply {
-                    action = LocationService.ACTION_SERVICE_STOP
-                    context.startService(this)
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        "Lat: ${currentLocation?.latitude?.format(6) ?: "---"}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = AppScreenColors.SecondaryText
+                    )
+                    Text(
+                        "Lon: ${currentLocation?.longitude?.format(6) ?: "---"}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = AppScreenColors.SecondaryText
+                    )
                 }
-                isServiceRunningActually = false // Actualiza estado local
-            }) {
-                Text(text = "Detener GPS")
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            Toast.makeText(context, "Iniciando servicio GPS...", Toast.LENGTH_SHORT).show()
+                            Intent(context, LocationService::class.java).apply {
+                                action = LocationService.ACTION_SERVICE_START
+                                context.startService(this)
+                            }
+                            isServiceRunningUiState = true
+                        },
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = AppScreenColors.SecondaryActionText),
+
+                    ) {
+                        Text("Iniciar GPS")
+                    }
+                    OutlinedButton(
+                        onClick = {
+                            Toast.makeText(context, "Deteniendo servicio GPS...", Toast.LENGTH_SHORT).show()
+                            Intent(context, LocationService::class.java).apply {
+                                action = LocationService.ACTION_SERVICE_STOP
+                                context.startService(this)
+                            }
+                            isServiceRunningUiState = false
+                        },
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = AppScreenColors.SecondaryActionText),
+                       
+                    ) {
+                        Text("Detener GPS")
+                    }
+                }
+                Text(
+                    text = if (isServiceRunningUiState) "Servicio GPS: Solicitado Iniciar" else "Servicio GPS: Solicitado Detener / Inactivo",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = AppScreenColors.SecondaryText,
+                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 6.dp)
+                )
             }
         }
-        Text(
-            text = if (isServiceRunningActually) "Servicio GPS: Corriendo" else "Servicio GPS: Detenido",
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(vertical = 4.dp)
-        )
 
-        Divider(modifier = Modifier.padding(vertical = 16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-
-        // --- Nuevos Elementos para WhatsApp (basados en tu imagen) ---
         Text(
             text = "Estoy perdido, por favor encuentrenme",
-            fontSize = 20.sp,
+            style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
+            color = AppScreenColors.TitleText,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(vertical = 16.dp)
+            modifier = Modifier.padding(bottom = 16.dp)
         )
 
         Image(
-            // Asegúrate de que ic_person_placeholder exista en res/drawable
             painter = painterResource(id = R.drawable.ic_person_placeholder),
             contentDescription = "Icono de Usuario",
             modifier = Modifier
-                .size(100.dp)
-                .padding(bottom = 16.dp)
+                .size(90.dp)
+                .padding(bottom = 20.dp)
+            // .clip(RoundedCornerShape(45.dp)), // LÍNEA ELIMINADA
         )
 
         OutlinedTextField(
             value = phoneNumber,
             onValueChange = { phoneNumber = it },
             label = { Text("Número WhatsApp (+CódPaís)") },
+            placeholder = { Text("+5076XXXXXXX", color = AppScreenColors.HintText) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
             singleLine = true,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 8.dp)
+                .padding(bottom = 12.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                focusedTextColor = AppScreenColors.PrimaryText,
+                unfocusedTextColor = AppScreenColors.PrimaryText,
+                cursorColor = AppScreenColors.TextFieldCursor,
+                focusedBorderColor = AppScreenColors.TextFieldFocusedBorder,
+                unfocusedBorderColor = AppScreenColors.TextFieldBorder,
+                focusedLabelColor = AppScreenColors.PrimaryAction,
+                unfocusedLabelColor = AppScreenColors.SecondaryText,
+                focusedPlaceholderColor = AppScreenColors.HintText,
+                unfocusedPlaceholderColor = AppScreenColors.HintText
+            )
         )
 
         OutlinedTextField(
             value = customMessage,
             onValueChange = { customMessage = it },
-            label = { Text("Mensaje (opcional)") },
+            label = { Text("Mensaje adicional (opcional)") },
+            placeholder = { Text("Ej: Necesito ayuda cerca de...", color = AppScreenColors.HintText)},
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 100.dp), // Para que sea un área de texto más grande
+                .heightIn(min = 100.dp, max = 150.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                focusedTextColor = AppScreenColors.PrimaryText,
+                unfocusedTextColor = AppScreenColors.PrimaryText,
+                cursorColor = AppScreenColors.TextFieldCursor,
+                focusedBorderColor = AppScreenColors.TextFieldFocusedBorder,
+                unfocusedBorderColor = AppScreenColors.TextFieldBorder,
+                focusedLabelColor = AppScreenColors.PrimaryAction,
+                unfocusedLabelColor = AppScreenColors.SecondaryText,
+                focusedPlaceholderColor = AppScreenColors.HintText,
+                unfocusedPlaceholderColor = AppScreenColors.HintText
+            )
         )
 
-        Spacer(modifier = Modifier.weight(1f)) // Empuja el botón hacia abajo
+        Spacer(modifier = Modifier.weight(1f))
 
         Button(
             onClick = {
-                if (currentLocation?.latitude != null && currentLocation.longitude != null) {
+                currentLocation?.let { loc ->
+                    val lat = loc.latitude
+                    val lon = loc.longitude
                     val completeMessage = buildString {
                         if (customMessage.isNotBlank()) {
-                            append(customMessage)
+                            append(customMessage.trim())
                             append("\n\n")
                         }
-                        append("¡Ayuda! Esta es mi ubicación:\n")
-                        append("Latitud: ${currentLocation.latitude.format(6)}\n")
-                        append("Longitud: ${currentLocation.longitude.format(6)}\n\n")
-                        // Enlace de Google Maps funcional
-                        append("https://www.google.com/maps?q=${currentLocation.latitude.format(6)},${currentLocation.longitude.format(6)}")
+                        append("¡Ayuda! Esta es mi ubicación aproximada:\n")
+                        append("Latitud: ${lat.format(6)}\n")
+                        append("Longitud: ${lon.format(6)}\n\n")
+                        append("Puedes verme en un mapa aquí:\n")
+                        append("https://maps.google.com/?q=${lat.format(6)},${lon.format(6)}")
                     }
-                    // Llama a la función sendWhatsAppMessage que ahora está en MainActivity
                     (context as? MainActivity)?.sendWhatsAppMessage(context, phoneNumber, completeMessage)
-                } else {
-                    Toast.makeText(context, "Ubicación no disponible. Asegúrate de que el servicio GPS esté activo y con permisos.", Toast.LENGTH_LONG).show()
+                } ?: run {
+                    Toast.makeText(context, "Ubicación no disponible. Active el servicio GPS y espere.", Toast.LENGTH_LONG).show()
                 }
             },
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = AppScreenColors.PrimaryAction,
+                contentColor = AppScreenColors.PrimaryActionText
+            ),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 16.dp, bottom = 8.dp) // Ajustar padding
+                .padding(horizontal = 24.dp, vertical = 16.dp)
+                .height(52.dp)
         ) {
-            Text("Enviar a Whatsapp", fontSize = 16.sp)
+            Icon(
+                imageVector = Icons.Filled.Send,
+                contentDescription = "Enviar Icono",
+                modifier = Modifier.size(ButtonDefaults.IconSize)
+            )
+            Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+            Text("Enviar Ubicación por Whatsapp", fontSize = 16.sp, fontWeight = FontWeight.Medium)
         }
     }
 }
 
-// Si quieres un Preview para el App Composable
 @Preview(showBackground = true)
 @Composable
-fun DefaultPreview() {
-    // Asume que tienes un tema definido en ui.theme, si no, envuélvelo con MaterialTheme()
-    // com.ar.backgroundlocation.ui.theme.BackGroundLocationTheme {
-    App(currentLocation = Location("preview").apply { latitude = 10.0; longitude = -75.0 })
-    // }
+fun AppPreview() {
+    MaterialTheme {
+        App(currentLocation = Location("preview").apply { latitude = 9.022905; longitude = -79.522996 })
+    }
 }
