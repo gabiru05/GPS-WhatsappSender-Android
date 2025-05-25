@@ -22,9 +22,9 @@
 
 <p align="center">
   <em>(Asegúrate de colocar tus capturas en una carpeta llamada "Screenshot" en la raíz de tu repositorio)</em><br>
-  <img src="./Screenshot/ejemplo8.png" width="250" alt="Captura de pantalla principal de la app">
-  <img src="./Screenshot/ejemplo6.png" width="250" alt="Captura de pantalla del mensaje enviado o notificación">
-  <img src="./Screenshot/ejemplo7.png" width="250" alt="Captura de pantalla mostrando detencion del servicio">
+  <img src="./Screenshot/ejemplo 8.png" width="250" alt="Captura de pantalla principal de la app">
+  <img src="./Screenshot/ejemplo 6.png" width="250" alt="Captura de pantalla del mensaje enviado o notificación">
+  <img src="./Screenshot/ejemplo 7.png" width="250" alt="Captura de pantalla mostrando detencion del servicio">
 </p>
 
 <h3 align="center">Creado/Adaptado por:</h3>
