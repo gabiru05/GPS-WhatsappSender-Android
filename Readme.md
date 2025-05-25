@@ -21,7 +21,6 @@
 </p>
 
 <p align="center">
-  <em>(Asegúrate de colocar tus capturas en una carpeta llamada "Screenshot" en la raíz de tu repositorio)</em><br>
   <img src="./Screenshot/ejemplo 8.png" width="250" alt="Captura de pantalla principal de la app">
   <img src="./Screenshot/ejemplo 6.png" width="250" alt="Captura de pantalla del mensaje enviado o notificación">
   <img src="./Screenshot/ejemplo 7.png" width="250" alt="Captura de pantalla mostrando detencion del servicio">
@@ -62,13 +61,12 @@
             -   `MainScreen.kt`: Define el Composable `App()` que construye toda la interfaz de usuario.
             -   `LocationService.kt`: Servicio en primer plano encargado de obtener las actualizaciones de ubicación del GPS.
             -   `GPSLocationClient.kt`: Clase helper que interactúa con el FusedLocationProviderClient.
-            -   `AppConstants.kt`: (Si existe) Constantes de la aplicación.
             -   `ui/theme/`: Carpeta generada por Android Studio para el tema de Compose (`Color.kt`, `Theme.kt`, `Type.kt`).
         -   `res/`: Carpeta de recursos (drawables, mipmap, values).
             -   `drawable/ic_person_placeholder.xml`: Icono vectorial para el placeholder de usuario.
         -   `AndroidManifest.xml`: Define permisos, componentes de la aplicación (incluyendo el `LocationService` y su `foregroundServiceType`), y las `<queries>` necesarias para interactuar con WhatsApp.
     -   `build.gradle.kts` (o `build.gradle`): Script de configuración de Gradle para el módulo `app`.
--   `gradle/libs.versions.toml` (si se usa Version Catalogs): Define las versiones de las dependencias y plugins.
+
 
 <img src="https://github.com/gabiru05/Gaby_Resource/blob/master/images/Gifs/1pxRainbowLine.gif" width= "300000" alt="línea horizontal RGB arcoíris súper delgada">
 
@@ -91,10 +89,9 @@
 
 1.  **Clonar el repositorio:**
     ```bash
-    git clone [URL_DE_TU_REPOSITORIO_AQUI]
-    cd [NOMBRE_DE_LA_CARPETA_DEL_PROYECTO]
+    git clone [[https://github.com/gabiru05/GPS-WhatsappSender-Android](https://github.com/gabiru05/GPS-WhatsappSender-Android)]
+    cd [GPS-WhatsappSender-Android]
     ```
-    *(Reemplaza con la URL de tu repositorio y el nombre de la carpeta)*
 
 2.  **Abrir en Android Studio:**
     * Abre Android Studio.
